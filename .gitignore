@@ -1,0 +1,17 @@
+# Poetry virtual environment
+.venv
+
+# Poetry build files
+dist
+build
+
+# Mypy cache files
+.mypy_cache
+
+# Pytest cache files
+.pytest_cache
+
+# Environment variables file
+.env
+
+# Other files or directories you don't want to track
