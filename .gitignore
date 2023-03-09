@@ -5,6 +5,9 @@
 dist
 build
 
+#Poetry cache dir
+__pycache__
+
 # Mypy cache files
 .mypy_cache
 
