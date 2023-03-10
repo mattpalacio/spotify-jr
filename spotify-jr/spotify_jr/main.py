@@ -1,12 +1,13 @@
 import base64
 import json
 from functools import lru_cache
-from requests import post, get
-from fastapi import Depends, FastAPI, Response, Request
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
-from . import config
 
+from fastapi import Depends, FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from requests import post
+
+from . import config
 
 app = FastAPI()
 
@@ -24,8 +25,15 @@ def get_settings():
     return config.Settings()
 
 
-@app.get("/login")
-async def home(response: Response, settings: config.Settings = Depends(get_settings)):
+@app.get("/")
+async def home():
+    return {"message": "Hello World"}
+
+
+@app.get("/authorize")
+async def authorize(
+    response: Response, settings: config.Settings = Depends(get_settings)
+):
     scope = "user-library-read"
     url = settings.spotify_auth_url + "/authorize"
     query = f"?client_id={settings.spotify_client_id}&response_type=code&redirect_uri={settings.redirect_uri}&scope={scope}"
@@ -33,10 +41,9 @@ async def home(response: Response, settings: config.Settings = Depends(get_setti
     return response
 
 
-@app.get("/callback")
-async def callback(
+@app.get("/login")
+async def login(
     request: Request,
-    response: Response,
     settings: config.Settings = Depends(get_settings),
 ):
     code = request.query_params["code"]
@@ -62,9 +69,4 @@ async def callback(
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
 
-        response = JSONResponse(content=data)
-        response.set_cookie(key="accessToken", value=data["access_token"])
-        response.set_cookie(key="refreshToken", value=data["refresh_token"])
-        response.set_cookie(key="expiresIn", value=data["expires_in"])
-
-    return response
+    return data
