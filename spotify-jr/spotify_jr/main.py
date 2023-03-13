@@ -3,7 +3,7 @@ import json
 from functools import lru_cache
 from urllib.parse import urlencode
 
-from fastapi import Depends, FastAPI, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from requests import get, post
@@ -24,16 +24,6 @@ app.add_middleware(
 @lru_cache()
 def get_settings():
     return config.Settings()
-
-
-@app.get("/")
-async def home():
-    return {"message": "Hello World"}
-
-
-"""
-Auth Endpoints
-"""
 
 
 @app.get("/authorize")
@@ -77,8 +67,10 @@ async def login(code: str, settings: config.Settings = Depends(get_settings)):
 
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
-
-    return data
+        return data
+    else:
+        error = json.loads(api_response.content)
+        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
 
 
 @app.get("/refresh")
@@ -101,13 +93,10 @@ async def refresh(
 
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
-
-    return data
-
-
-"""
-Search Endpoint
-"""
+        return data
+    else:
+        error = json.loads(api_response.content)
+        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
 
 
 @app.get("/search")
@@ -115,8 +104,8 @@ async def search(
     request: Request,
     q: str,
     type: str,
-    limit: int = 10,
-    offset: int = 0,
+    limit: int = Query(default=10, g=0, le=50),
+    offset: int = Query(default=0, g=0, le=1000),
     settings: config.Settings = Depends(get_settings),
 ):
     bearer_token = request.headers["authorization"]
@@ -131,5 +120,7 @@ async def search(
 
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
-
-    return data
+        return data
+    else:
+        error = json.loads(api_response.content)
+        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
