@@ -1,13 +1,14 @@
 import base64
 import json
 from functools import lru_cache
+from urllib.parse import urlencode
 
-from fastapi import Depends, FastAPI, Response
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from requests import post
+from requests import get, post
 
-from . import config
+from . import config, schemas
 
 app = FastAPI()
 
@@ -25,23 +26,26 @@ def get_settings():
     return config.Settings()
 
 
-@app.get("/")
-async def home():
-    return {"message": "Hello World"}
-
-
-@app.get("/authorize")
+@app.get("/authorize", tags=["auth"])
 async def authorize(
     response: Response, settings: config.Settings = Depends(get_settings)
 ):
     scope = "user-library-read"
-    url = settings.spotify_auth_url + "/authorize"
-    query = f"?client_id={settings.spotify_client_id}&response_type=code&redirect_uri={settings.redirect_uri}&scope={scope}"
-    response = RedirectResponse(url=url + query)
+    base_url = settings.spotify_auth_url + "/authorize"
+    query_string = urlencode(
+        {
+            "client_id": settings.spotify_client_id,
+            "response_type": "code",
+            "redirect_uri": settings.redirect_uri,
+            "scope": scope,
+        }
+    )
+    full_url = base_url + "?" + query_string
+    response = RedirectResponse(url=full_url)
     return response
 
 
-@app.get("/login")
+@app.get("/login", response_model=schemas.SpotifyCredential, tags=["auth"])
 async def login(code: str, settings: config.Settings = Depends(get_settings)):
     url = settings.spotify_auth_url + "/api/token"
 
@@ -63,11 +67,13 @@ async def login(code: str, settings: config.Settings = Depends(get_settings)):
 
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
+        return data
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
 
-    return data
 
-
-@app.get("/refresh")
+@app.get("/refresh", response_model=schemas.SpotifyCredentialRefresh, tags=["auth"])
 async def refresh(
     refresh_token: str, settings: config.Settings = Depends(get_settings)
 ):
@@ -87,5 +93,37 @@ async def refresh(
 
     if api_response.status_code == 200:
         data = json.loads(api_response.content)
+        return data
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
 
-    return data
+
+@app.get("/search", tags=["search"])
+async def search(
+    request: Request,
+    q: str,
+    type: str,
+    limit: int = Query(default=10, g=0, le=50),
+    offset: int = Query(default=0, g=0, le=1000),
+    settings: config.Settings = Depends(get_settings),
+):
+    bearer_token = request.headers["authorization"]
+
+    base_url = settings.spotify_api_url + "/search"
+    query_string = urlencode({"q": q, "type": type, "limit": limit, "offset": offset})
+    full_url = base_url + "?" + query_string
+
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = get(url=full_url, headers=headers)
+
+    if api_response.status_code == 200:
+        data = json.loads(api_response.content)
+        return data
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
