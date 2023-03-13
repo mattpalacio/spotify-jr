@@ -69,8 +69,8 @@ async def login(code: str, settings: config.Settings = Depends(get_settings)):
         data = json.loads(api_response.content)
         return data
     else:
-        error = json.loads(api_response.content)
-        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
 
 
 @app.get("/refresh", response_model=schemas.SpotifyCredentialRefresh, tags=["auth"])
@@ -95,8 +95,8 @@ async def refresh(
         data = json.loads(api_response.content)
         return data
     else:
-        error = json.loads(api_response.content)
-        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
 
 
 @app.get("/search", tags=["search"])
@@ -114,7 +114,10 @@ async def search(
     query_string = urlencode({"q": q, "type": type, "limit": limit, "offset": offset})
     full_url = base_url + "?" + query_string
 
-    headers = {"Authorization": bearer_token, "Content-Type": "application/json"}
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
 
     api_response = get(url=full_url, headers=headers)
 
@@ -122,5 +125,5 @@ async def search(
         data = json.loads(api_response.content)
         return data
     else:
-        error = json.loads(api_response.content)
-        raise HTTPException(status_code=int(error["status"]), detail=error["message"])
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
