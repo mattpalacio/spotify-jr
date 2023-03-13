@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from requests import get, post
 
-from . import config
+from . import config, schemas
 
 app = FastAPI()
 
@@ -26,7 +26,7 @@ def get_settings():
     return config.Settings()
 
 
-@app.get("/authorize")
+@app.get("/authorize", tags=["auth"])
 async def authorize(
     response: Response, settings: config.Settings = Depends(get_settings)
 ):
@@ -45,7 +45,7 @@ async def authorize(
     return response
 
 
-@app.get("/login")
+@app.get("/login", response_model=schemas.SpotifyCredential, tags=["auth"])
 async def login(code: str, settings: config.Settings = Depends(get_settings)):
     url = settings.spotify_auth_url + "/api/token"
 
@@ -73,7 +73,7 @@ async def login(code: str, settings: config.Settings = Depends(get_settings)):
         raise HTTPException(status_code=int(error["status"]), detail=error["message"])
 
 
-@app.get("/refresh")
+@app.get("/refresh", response_model=schemas.SpotifyCredentialRefresh, tags=["auth"])
 async def refresh(
     refresh_token: str, settings: config.Settings = Depends(get_settings)
 ):
@@ -99,7 +99,7 @@ async def refresh(
         raise HTTPException(status_code=int(error["status"]), detail=error["message"])
 
 
-@app.get("/search")
+@app.get("/search", tags=["search"])
 async def search(
     request: Request,
     q: str,
