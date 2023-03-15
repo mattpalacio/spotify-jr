@@ -11,12 +11,18 @@ class SpotifyCredentialBase(BaseModel):
 class SpotifyCredentialRefresh(SpotifyCredentialBase):
     pass
 
-    class Config:
-        orm_mode = True
-
 
 class SpotifyCredential(SpotifyCredentialBase):
     refresh_token: str
 
-    class Config:
-        orm_mode = True
+
+class PlaybackStartIn(BaseModel):
+    context_uri: str | None = None
+    uris: list[str] | None = None
+    offset: dict[str, int] | None = None
+    position_ms: int = 0
+
+
+class PlaybackTransferIn(BaseModel):
+    device_ids: list[str]
+    play: bool = True
