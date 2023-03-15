@@ -65,7 +65,7 @@ async def login(code: str, settings: config.Settings = Depends(get_settings)):
 
     api_response = post(url, headers=headers, data=data)
 
-    if api_response.status_code == 200:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         data = json.loads(api_response.content)
         return data
     else:
@@ -91,7 +91,7 @@ async def refresh(
 
     api_response = post(url, headers=headers, data=data)
 
-    if api_response.status_code == 200:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         data = json.loads(api_response.content)
         return data
     else:
@@ -121,7 +121,7 @@ async def search(
 
     api_response = get(url=full_url, headers=headers)
 
-    if api_response.status_code == 200:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         data = json.loads(api_response.content)
         return data
     else:
@@ -146,7 +146,7 @@ async def transfer_playback(
 
     api_response = put(url=base_url, headers=headers, json=json_data)
 
-    if api_response.status_code == 204:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         return None
     else:
         error = json.loads(api_response.content)["error"]
@@ -166,7 +166,7 @@ async def get_devices(
 
     api_response = get(url=base_url, headers=headers)
 
-    if api_response.status_code == 200:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         data = json.loads(api_response.content)
         return data
     else:
@@ -189,7 +189,7 @@ async def get_currently_playing(
 
     api_response = get(url=full_url, headers=headers)
 
-    if api_response.status_code == 200:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         data = json.loads(api_response.content)
         return data
     else:
@@ -216,7 +216,7 @@ async def start_playback(
 
     api_response = put(url=full_url, headers=headers, json=json_data)
 
-    if api_response.status_code == 204:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         return None
     else:
         error = json.loads(api_response.content)["error"]
@@ -240,7 +240,7 @@ async def pause_playback(
 
     api_response = put(url=full_url, headers=headers)
 
-    if api_response.status_code == 204:
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
         return None
     else:
         error = json.loads(api_response.content)["error"]
