@@ -347,3 +347,53 @@ async def toggle_shuffle(
     else:
         error = json.loads(api_response.content)["error"]
         raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
+@app.put("/player/seek", status_code=204, tags=["player"])
+async def pause_playback(
+    request: Request,
+    position_ms: int,
+    device_id: str,
+    settings: config.Settings = Depends(get_settings),
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/seek"
+    query_string = urlencode({"position_ms": position_ms, "device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = put(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
+@app.put("/player/volume", status_code=204, tags=["player"])
+async def pause_playback(
+    request: Request,
+    device_id: str,
+    volume_percent: int = Query(ge=0, le=100),
+    settings: config.Settings = Depends(get_settings),
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/pause"
+    query_string = urlencode({"volume_percent": volume_percent, "device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = put(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
