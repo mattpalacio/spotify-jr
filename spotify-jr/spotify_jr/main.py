@@ -1,5 +1,6 @@
 import base64
 import json
+from enum import Enum
 from functools import lru_cache
 from urllib.parse import urlencode
 
@@ -9,6 +10,13 @@ from fastapi.responses import RedirectResponse
 from requests import get, post, put
 
 from . import config, schemas
+
+
+class RepeatMode(str, Enum):
+    track = "track"
+    context = "context"
+    off = "off"
+
 
 app = FastAPI()
 
@@ -276,6 +284,56 @@ async def pause_playback(
     bearer_token = request.headers["authorization"]
     base_url = settings.spotify_api_url + "/me/player/pause"
     query_string = urlencode({"device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = put(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
+@app.put("/player/repeat", status_code=204, tags=["player"])
+async def set_repeat_mode(
+    request: Request,
+    state: RepeatMode,
+    device_id: str,
+    settings: config.Settings = Depends(get_settings),
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/repeat"
+    query_string = urlencode({"state": state, "device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = put(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
+@app.put("/player/shuffle", status_code=204, tags=["player"])
+async def toggle_shuffle(
+    request: Request,
+    state: bool,
+    device_id: str,
+    settings: config.Settings = Depends(get_settings),
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/shuffle"
+    query_string = urlencode({"state": state, "device_id": device_id})
     full_url = base_url + "?" + query_string
     headers = {
         "Authorization": bearer_token,
