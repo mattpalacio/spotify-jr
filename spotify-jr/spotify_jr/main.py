@@ -197,6 +197,50 @@ async def get_currently_playing(
         raise HTTPException(status_code=error["status"], detail=error["message"])
 
 
+@app.post("/player/next", status_code=204, tags=["player"])
+async def skip_to_next(
+    request: Request, device_id: str, settings: config.Settings = Depends(get_settings)
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/next"
+    query_string = urlencode({"device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = post(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
+@app.post("/player/previous", status_code=204, tags=["player"])
+async def skip_to_previous(
+    request: Request, device_id: str, settings: config.Settings = Depends(get_settings)
+):
+    bearer_token = request.headers["authorization"]
+    base_url = settings.spotify_api_url + "/me/player/previous"
+    query_string = urlencode({"device_id": device_id})
+    full_url = base_url + "?" + query_string
+    headers = {
+        "Authorization": bearer_token,
+        "Content-Type": "application/json",
+    }
+
+    api_response = post(url=full_url, headers=headers)
+
+    if api_response.status_code >= 200 and api_response.status_code <= 299:
+        return None
+    else:
+        error = json.loads(api_response.content)["error"]
+        raise HTTPException(status_code=error["status"], detail=error["message"])
+
+
 @app.put("/player/play", status_code=204, tags=["player"])
 async def start_playback(
     request: Request,
