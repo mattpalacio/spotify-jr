@@ -1,7 +1,7 @@
 import json
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from requests import get
 
 from .. import config, dependencies
@@ -11,21 +11,20 @@ router = APIRouter(tags=["search"])
 
 @router.get("/search")
 async def search(
-    request: Request,
     q: str,
     type: str,
     limit: int = Query(default=10, g=0, le=50),
     offset: int = Query(default=0, g=0, le=1000),
+    authorization: str = Header(),
     settings: config.Settings = Depends(dependencies.get_settings),
 ):
-    bearer_token = request.headers["authorization"]
 
     base_url = settings.spotify_api_url + "/search"
     query_string = urlencode({"q": q, "type": type, "limit": limit, "offset": offset})
     full_url = base_url + "?" + query_string
 
     headers = {
-        "Authorization": bearer_token,
+        "Authorization": authorization,
         "Content-Type": "application/json",
     }
 
