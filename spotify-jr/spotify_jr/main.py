@@ -16,3 +16,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(search.router)
 app.include_router(player.router)
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return {"message": "Welcome to Not-ify API!"}
