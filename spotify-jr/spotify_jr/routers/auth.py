@@ -2,6 +2,7 @@ import base64
 import json
 from urllib.parse import urlencode
 
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
 from requests import post
@@ -9,6 +10,12 @@ from requests import post
 from .. import config, dependencies, schemas
 
 router = APIRouter(tags=["auth"])
+
+config = dependencies.get_settings()
+oauth = OAuth(config)
+oauth.register(
+    name="spotify",
+)
 
 
 @router.get(
@@ -18,7 +25,6 @@ async def authorize(
     response: Response, settings: config.Settings = Depends(dependencies.get_settings)
 ):
     scope = "streaming user-read-email user-read-private user-library-read user-library-modify user-read-playback-state user-modify-playback-state"
-    base_url = settings.spotify_auth_url + "/authorize"
     query_string = urlencode(
         {
             "client_id": settings.spotify_client_id,
@@ -27,8 +33,8 @@ async def authorize(
             "scope": scope,
         }
     )
-    full_url = base_url + "?" + query_string
-    response = RedirectResponse(url=full_url)
+    url = settings.spotify_auth_url + "?" + query_string
+    response = RedirectResponse(url=url)
     return response
 
 
@@ -36,7 +42,7 @@ async def authorize(
 async def login(
     code: str, settings: config.Settings = Depends(dependencies.get_settings)
 ):
-    url = settings.spotify_auth_url + "/api/token"
+    url = settings.spotify_access_token_url
 
     auth_string = settings.spotify_client_id + ":" + settings.spotify_client_secret
     auth_bytes = auth_string.encode("utf-8")
@@ -66,7 +72,7 @@ async def login(
 async def refresh(
     refresh_token: str, settings: config.Settings = Depends(dependencies.get_settings)
 ):
-    url = settings.spotify_auth_url + "/api/token"
+    url = settings.spotify_access_token_url
 
     auth_string = settings.spotify_client_id + ":" + settings.spotify_client_secret
     auth_bytes = auth_string.encode("utf-8")

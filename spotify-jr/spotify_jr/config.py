@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     spotify_client_id: str
     spotify_client_secret: str
     spotify_auth_url: str
+    spotify_access_token_url: str
     spotify_api_url: str
     redirect_uri: str
 
