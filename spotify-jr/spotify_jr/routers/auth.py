@@ -6,22 +6,24 @@ from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from requests import post
+from starlette.config import Config
 
 from .. import config, dependencies, schemas
 
 router = APIRouter(tags=["auth"])
 
-config = dependencies.get_settings()
 scope = "streaming user-read-email user-read-private user-library-read user-library-modify user-read-playback-state user-modify-playback-state"
 
-oauth = OAuth(config)
+oauthConfig = Config(".env")
+oauth = OAuth(oauthConfig)
+settings = config.Settings()
 oauth.register(
     name="spotify",
-    access_token_url=config.spotify_access_token_url,
+    access_token_url=settings.spotify_access_token_url,
     access_token_params=None,
-    authorize_url=config.spotify_auth_url,
+    authorize_url=settings.spotify_auth_url,
     authorize_params=None,
-    api_base_url=config.spotify_api_url,
+    api_base_url=settings.spotify_api_url,
     client_kwargs={"scope": scope},
 )
 
@@ -79,6 +81,7 @@ async def auth(
     #     error = json.loads(api_response.content)["error"]
     #     raise HTTPException(status_code=error["status"], detail=error["message"])
     token = await oauth.spotify.authorize_access_token(request)
+    print("TOKEN", token)
     return token
 
 
