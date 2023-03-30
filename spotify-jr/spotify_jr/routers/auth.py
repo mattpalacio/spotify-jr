@@ -28,9 +28,7 @@ oauth.register(
 )
 
 
-@router.get(
-    "/login",
-)
+@router.get("/login")
 async def login(
     # response: Response, settings: config.Settings = Depends(dependencies.get_settings)
     request: Request,
@@ -51,7 +49,10 @@ async def login(
     return await oauth.spotify.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/auth", response_model=schemas.SpotifyCredential)
+@router.get(
+    "/auth"
+    # , response_model=schemas.SpotifyCredential
+)
 async def auth(
     # code: str, settings: config.Settings = Depends(dependencies.get_settings)
     request: Request,
