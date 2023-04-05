@@ -187,7 +187,7 @@ async def set_repeat_mode(
     settings: config.Settings = Depends(dependencies.get_settings),
 ):
     base_url = settings.spotify_api_url + "/me/player/repeat"
-    query_string = urlencode({"state": state, "device_id": device_id})
+    query_string = urlencode({"state": state.value, "device_id": device_id})
     full_url = base_url + "?" + query_string
     headers = {
         "Authorization": authorization,
